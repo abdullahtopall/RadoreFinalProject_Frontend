@@ -4,10 +4,12 @@ import settingsReducer from "./slices/settings";
 import userReducer from "./slices/user";
 
 export const store = configureStore ( {
-    reducer : {
+    reducer :
+     {
         products : productsReducer,
         user : userReducer,
         settings : settingsReducer
 
-    }
-})
+     }
+});
+export default store;

@@ -2,9 +2,14 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import loadable from "./components/Common/loadable";
 import pMinDelay from "p-min-delay";
 import Loader from "./components/Common/Loader";
+import ProductList from "./components/ProductList";
 import './assets/css/style.css';
 import './assets/css/animate.min.css';
 import './assets/css/color.css';
+import ProductDetail from "./components/ProductDetail";
+import ChatComponent from "./components/ChatComponent"; // ChatComponent importu
+
+
 const Fashion = loadable(() => pMinDelay(import('./page/'), 250), { fallback: <Loader /> });
 const Register = loadable(() => pMinDelay(import('./page/register'), 250), { fallback: <Loader /> });
 const ProductDetailsTwos = loadable(() => pMinDelay(import('./page/Product/product-details-two'), 250), { fallback: <Loader /> });
@@ -20,6 +25,7 @@ const CheckoutTwos = loadable(() => pMinDelay(import('./page/checkout/checkout-t
 const CustomerOrder = loadable(() => pMinDelay(import('./page/my-account/customer-order'), 250), { fallback: <Loader /> });
 const CustomerAddress = loadable(() => pMinDelay(import('./page/my-account/customer-address'), 250), { fallback: <Loader /> });
 const CustomerAccountDetails = loadable(() => pMinDelay(import('./page/my-account/customer-account-details'), 250), { fallback: <Loader /> });
+
 function App() {
   return (
     <div >
@@ -29,7 +35,6 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/wishlist" element={<Favorites />} />
-
           <Route path="/login" element={<Login />} />
           <Route path="/product-details-two/:id" element={<ProductDetailsTwos />} />
           <Route path="/about" element={<About />} />
@@ -40,6 +45,11 @@ function App() {
           <Route path="/my-account/customer-address" element={<CustomerAddress />} />
           <Route path="/my-account/customer-account-details" element={<CustomerAccountDetails />} />
           <Route path="/shop/shop-left-sidebar" element={<ShopLeftSideBar />} />
+
+          {/* Product List Route */}
+          <Route path="/products" element={<ProductList />} />
+          <Route path="/product/:id" element={<ProductDetail />} />
+          <Route path="/chat" element={<ChatComponent />} />
         </Routes>
       </BrowserRouter>
     </div>

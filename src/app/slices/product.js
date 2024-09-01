@@ -1,96 +1,125 @@
-import { createSlice } from "@reduxjs/toolkit";
-import { ProductData } from "../data/ProductData";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import axios from 'axios';
 import Swal from "sweetalert2";
 
+// API URL'sini uygun şekilde güncelleyin
+const API_BASE_URL = "https://localhost:44390";
 
+// Thunks for async actions
+export const fetchProducts = createAsyncThunk('products/fetchProducts', async () => {
+    try {
+        const response = await axios.get(API_BASE_URL);
+        return response.data.result;
+    } catch (error) {
+        console.error("Error fetching products:", error);
+        throw error;
+    }
+});
+
+export const fetchProductById = createAsyncThunk('products/fetchProductById', async (id) => {
+    try {
+        const response = await axios.get(`${API_BASE_URL}/${id}`);
+        return response.data.result;
+    } catch (error) {
+        console.error("Error fetching product:", error);
+        throw error;
+    }
+});
+
+// Slice
 const productsSlice = createSlice({
     name: 'products',
     initialState: {
-        products: ProductData,
-        carts: ProductData.slice(2, 4),
-        favorites: ProductData.slice(1, 4),
-        single: null,  // her bir ürün temsil edelr
-
+        products: [],
+        carts: [],
+        favorites: [],
+        single: null,
+        status: 'idle',
+        error: null
     },
     reducers: {
-        //sepete ürün eklemek için kullanılacak
         AddToCart: (state, action) => {
             let { id } = action.payload;
-            let sepeteEklenecekUrun = state.carts.find(item => item.id === parseInt(id))
+            let sepeteEklenecekUrun = state.carts.find(item => item.id === parseInt(id));
             if (sepeteEklenecekUrun === undefined) {
-                //sepete eklemek istediğim ürün bilgilerine getirecek ilgili rest servisi çağırılır
-                let item = state.products.find(item => item.id === parseInt(id))
-                item.quantity = 1
-                state.carts.push(item)
-                Swal.fire(
-                    {
-                        title: 'Başarılı',
-                        text: "Ürün sepete eklendi!",
-                        icon: 'success',
-                        showConfirmButton: false,
-                        timer: 2000
-                    }
-                )
+                let item = state.products.find(item => item.id === parseInt(id));
+                item.quantity = 1;
+                state.carts.push(item);
+                Swal.fire({
+                    title: 'Başarılı',
+                    text: "Ürün sepete eklendi!",
+                    icon: 'success',
+                    showConfirmButton: false,
+                    timer: 2000
+                });
             }
-        },
-        getProductById: (state, action) => {
-            let { id } = action.payload;
-            let urunDetay = state.products.find(item => item.id === parseInt(id))
-            state.single = urunDetay
         },
         updateCart: (state, action) => {
             let { val, id } = action.payload;
             state.carts.forEach(item => {
                 if (item.id === parseInt(id)) {
-                    item.quantity = val
+                    item.quantity = val;
                 }
-            })
+            });
         },
         removeCart: (state, action) => {
             let { id } = action.payload;
-            let sepetinOnSonHali = state.carts.filter(item => item.id !== parseInt(id))
-            state.carts = sepetinOnSonHali
+            state.carts = state.carts.filter(item => item.id !== parseInt(id));
         },
-        //sepeti comple silmek için
         clearCart: (state) => {
-            state.carts = []
+            state.carts = [];
         },
         addToFavorites: (state, action) => {
-
             let { id } = action.payload;
-            let item = state.favorites.find(item => item.id === parseInt(id))
+            let item = state.favorites.find(item => item.id === parseInt(id));
             if (item === undefined) {
-                let urunFavori = state.products.find(item => item.id === parseInt(id))
-                urunFavori.quantity = 1
-                state.favorites.push(urunFavori)
-                Swal.fire(
-                    {
-                        title: 'Başarılı',
-                        text: 'İlgili ürün favorilere eklenmiştir',
-                        icon: 'success'
-                    }
-
-                )
-
+                let urunFavori = state.products.find(item => item.id === parseInt(id));
+                urunFavori.quantity = 1;
+                state.favorites.push(urunFavori);
+                Swal.fire({
+                    title: 'Başarılı',
+                    text: 'İlgili ürün favorilere eklenmiştir',
+                    icon: 'success'
+                });
+            } else {
+                Swal.fire('Başarsız', 'İlgili ürün favorilere eklenemedi', 'warning');
             }
-            else {
-                Swal.fire('Başarsız', 'İlgili ürün favorilere eklenemedi', 'warning')
-            }
-
         },
         removeToFav: (state, action) => {
             let { id } = action.payload;
-            let favorilerinOnSonHali = state.favorites.filter(item => item.id !== parseInt(id))
-            state.favorites = favorilerinOnSonHali
+            state.favorites = state.favorites.filter(item => item.id !== parseInt(id));
         },
-        //favorileri temizle
         clearFav: (state) => {
-            state.favorites = [] // state içindeki favori arrayını temizlemiş oluyor 
-        },
-
+            state.favorites = [];
+        }
+    },
+    extraReducers: (builder) => {
+        builder
+            .addCase(fetchProducts.pending, (state) => {
+                state.status = 'loading';
+            })
+            .addCase(fetchProducts.fulfilled, (state, action) => {
+                state.status = 'succeeded';
+                state.products = action.payload;
+            })
+            .addCase(fetchProducts.rejected, (state, action) => {
+                state.status = 'failed';
+                state.error = action.error.message;
+            })
+            .addCase(fetchProductById.pending, (state) => {
+                state.status = 'loading';
+            })
+            .addCase(fetchProductById.fulfilled, (state, action) => {
+                state.status = 'succeeded';
+                state.single = action.payload;
+            })
+            .addCase(fetchProductById.rejected, (state, action) => {
+                state.status = 'failed';
+                state.error = action.error.message;
+            });
     }
-})
+});
 
-const productsReducer = productsSlice.reducer
-export default productsReducer
+export const { AddToCart, updateCart, removeCart, clearCart, addToFavorites, removeToFav, clearFav } = productsSlice.actions;
 
+export default productsSlice.reducer;
